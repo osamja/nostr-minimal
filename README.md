@@ -1,157 +1,63 @@
 # Minimal Nostr Client and Relay
 
-A simple implementation of a Nostr (Notes and Other Stuff Transmitted by Relays) client and relay for testing and educational purposes.
-
-## Overview
-
-This minimal implementation consists of two main components:
-- **`minimal_relay.py`**: A basic Nostr relay that accepts and stores events
-- **`minimal_client.py`**: A simple client that creates and sends Nostr events
+A simple implementation of Nostr (Notes and Other Stuff Transmitted by Relays) client and relay for testing and educational purposes.
 
 ## Prerequisites
 
-Install the required dependencies:
-
 ```bash
-pip install websockets secp256k1 ecdsa
+pip install websockets secp256k1
 ```
 
 ## Components
 
-### Minimal Relay (`minimal_relay.py`)
+**Relay (`minimal_relay.py`)**
+- Listens on `ws://0.0.0.0:6969`
+- Validates and stores events using ECDSA signature verification
+- Handles `EVENT`, `REQ`, and `CLOSE` messages
+- In-memory storage only
 
-A lightweight Nostr relay implementation that:
-- Listens on `ws://0.0.0.0:6969` by default
-- Accepts `EVENT` messages and validates them using ECDSA signature verification
-- Stores valid events in memory
-- Responds to `REQ` messages by returning all stored events
-- Supports `CLOSE` messages (no-op)
-
-**Features:**
-- Event validation using ECDSA with SECP256k1 curve
-- In-memory event storage
-- Basic Nostr protocol message handling (EVENT, REQ, CLOSE)
-- JSON-based communication over WebSockets
-
-### Minimal Client (`minimal_client.py`)
-
-A simple Nostr client that:
-- Generates a secp256k1 key pair
-- Creates properly formatted Nostr events
-- Signs events with ECDSA
-- Sends events to a relay via WebSocket
+**Client (`minimal_client.py`)**
+- Generates secp256k1 key pairs
+- Creates and signs Nostr events
+- Sends events via WebSocket
 
 ## Usage
 
-### Starting the Relay
-
+Start the relay:
 ```bash
-cd minimal/
 python minimal_relay.py
 ```
 
-The relay will start and listen on `ws://0.0.0.0:6969`. You should see:
-```
-relay running on ws://0.0.0.0:6969
-```
-
-### Running the Client
-
-In a separate terminal:
-
+Send an event:
 ```bash
-cd minimal/
 python minimal_client.py
-```
-
-The client will:
-1. Generate a new key pair
-2. Create an event with the current timestamp as content
-3. Send the event to the relay at `ws://localhost:6969`
-4. Display the sent message and relay response
-
-Example output:
-```
-sent: ["EVENT", {"pubkey": "...", "created_at": 1699123456, "kind": 1, "tags": [], "content": "1699123456.789", "id": "...", "sig": "..."}]
-recv: ["OK", "event_id_here", true, ""]
 ```
 
 ## Event Structure
 
-Events follow the Nostr specification with these fields:
-- `id`: SHA-256 hash of the serialized event data
-- `pubkey`: 32-byte public key in hex format
+Events follow the Nostr specification:
+- `id`: SHA-256 hash of serialized event data
+- `pubkey`: 32-byte public key (hex, x-coordinate only)
 - `created_at`: Unix timestamp
 - `kind`: Event type (1 for text notes)
-- `tags`: Array of tags (empty in this minimal implementation)
+- `tags`: Array of tags (empty)
 - `content`: Event content
-- `sig`: ECDSA signature in compact format
+- `sig`: ECDSA signature (compact format)
 
-## Protocol Messages
+## Testing
 
-The implementation supports basic Nostr protocol messages:
-
-### EVENT Message
-```json
-["EVENT", <event object>]
-```
-
-### REQ Message
-```json
-["REQ", <subscription_id>, <filters>]
-```
-
-### OK Response
-```json
-["OK", <event_id>, <true|false>, <message>]
-```
-
-### EOSE Message
-```json
-["EOSE", <subscription_id>]
+Run the verification tests:
+```bash
+python test_e2e.py
 ```
 
 ## Limitations
 
-This is a minimal implementation intended for testing and educational purposes:
-
-- **No persistence**: Events are stored only in memory
-- **No filtering**: REQ messages return all stored events regardless of filters
-- **No subscriptions**: Real-time event streaming is not implemented
-- **Single connection**: The relay handles connections independently
-- **No authentication**: No access control or rate limiting
-- **Basic validation**: Minimal event validation beyond signature verification
-
-## Testing
-
-### Running the E2E Test
-
-A minimal end-to-end test is provided to verify the basic functionality:
-
-```bash
-cd minimal/
-python test_e2e.py
-```
-
-The test will:
-1. Start a relay server on localhost:8888
-2. Create and send a test event using the client functionality
-3. Verify the relay responds with an OK message
-4. Request all events back and verify the event was stored correctly
-5. Clean up the test server
-
-## Next Steps
-
-To extend this implementation, consider:
-- Adding event persistence (database storage)
-- Implementing proper subscription filtering
-- Adding rate limiting and authentication
-- Supporting additional event kinds
-- Adding real-time event broadcasting to subscribers
-- Implementing NIP (Nostr Implementation Possibilities) specifications
-
-And also check out some popular relay libraries.
+- No persistence (memory-only storage)
+- No filtering on REQ messages
+- No real-time subscriptions
+- Minimal validation beyond signature verification
 
 ## License
 
-This minimal implementation is provided for educational purposes. 
+Educational purposes. 
