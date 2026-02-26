@@ -1,20 +1,23 @@
 # Minimal Nostr Client and Relay
 
-A simple implementation of Nostr (Notes and Other Stuff Transmitted by Relays) client and relay for testing and educational purposes.
+A minimal personal Nostr relay and client. SQLite persistence, NIP-01 filters, live subscriptions, NIP-11 relay info, and optional owner-only publishing.
 
 ## Prerequisites
 
 ```bash
-pip install websockets secp256k1
+pip install websockets secp256k1 aiosqlite
 ```
 
 ## Components
 
 **Relay (`minimal_relay.py`)**
 - Listens on `ws://0.0.0.0:6969`
-- Validates and stores events using ECDSA signature verification
-- Handles `EVENT`, `REQ`, and `CLOSE` messages
-- In-memory storage only
+- SQLite persistence with WAL mode
+- ECDSA signature verification
+- NIP-01 filter matching (`ids`, `authors`, `kinds`, `since`, `until`, `#<tag>`)
+- Live subscriptions with `EVENT`/`EOSE`/`CLOSED` responses
+- NIP-11 relay information document
+- Optional owner-only publishing restriction
 
 **Client (`minimal_client.py`)**
 - Generates secp256k1 key pairs
@@ -28,21 +31,28 @@ Start the relay:
 python minimal_relay.py
 ```
 
+With Docker:
+```bash
+docker build -t nostr-minimal .
+docker run -p 6969:6969 nostr-minimal
+```
+
 Send an event:
 ```bash
 python minimal_client.py
 ```
 
-## Event Structure
+## Configuration
 
-Events follow the Nostr specification:
-- `id`: SHA-256 hash of serialized event data
-- `pubkey`: 32-byte public key (hex, x-coordinate only)
-- `created_at`: Unix timestamp
-- `kind`: Event type (1 for text notes)
-- `tags`: Array of tags (empty)
-- `content`: Event content
-- `sig`: ECDSA signature (compact format)
+All config is via environment variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `RELAY_DB_PATH` | `relay.db` | SQLite database path |
+| `RELAY_OWNER_PUBKEY` | (empty) | Restrict publishing to this pubkey |
+| `RELAY_NAME` | `nostr-minimal` | Relay name (NIP-11) |
+| `RELAY_DESCRIPTION` | `A minimal personal Nostr relay` | Relay description (NIP-11) |
+| `RELAY_CONTACT` | (empty) | Contact info (NIP-11) |
 
 ## Testing
 
@@ -51,13 +61,6 @@ Run the verification tests:
 python test_e2e.py
 ```
 
-## Limitations
-
-- No persistence (memory-only storage)
-- No filtering on REQ messages
-- No real-time subscriptions
-- Minimal validation beyond signature verification
-
 ## License
 
-Educational purposes. 
+This project is licensed under the BSD 3-Clause License - see the [LICENSE](LICENSE) file for details.
